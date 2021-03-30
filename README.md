@@ -24,7 +24,8 @@ python train.py
 ```
 
 **For ESOL dataset**
-
+```
 python get_data.py
 
 python esol_train.py
+```
