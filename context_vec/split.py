@@ -2,7 +2,6 @@ import numpy as np
 import os
 import random
 
-
 mols_src_all = []
 all_dict = {}
 with open("data/datasets/my_smi_0/mols.cp_UNK") as fp:
