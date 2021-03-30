@@ -16,11 +16,10 @@ mol2vec
 # Usage example
 
 **train Mol2Context-vec**
-# step 1
 Corpus generation using 9M compounds in the ZINC database with replacement of uncommon identifiers. It generates morgan identifiers (up to selected radius) which represent words (molecules are sentences). Words are ordered in the sentence according to atom order in canonical SMILES (generated when generating corpus) and at each atom starting by identifier at radius 1.
 `mol2vec corpus -i mols.smi -o mols.cp -r 1 -j 4 --uncommon UNK --threshold 3`
-# step 2
-python 
+`python split.py`
+`python train.py`
 
 **For ESOL dataset**
 
