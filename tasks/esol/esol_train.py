@@ -8,7 +8,6 @@ import torch.nn.functional as F
 import torch.utils.data as data
 import pandas as pd
 from sklearn.externals import joblib
-# from paper_data.plot_morgan import main
 import numpy as np
 import seaborn as sns
 import math
@@ -334,43 +333,6 @@ if __name__ == '__main__':
                 tmp_compound, tmp_y, tmp_smi, tmp_len = tmp
                 loss = 0
                 outputs, alpha_n, att_n = rnn(tmp_compound.to(device), tmp_len.to(device))
-                # out_label = F.softmax(outputs, dim=1)
-                # pred = out_label.data.max(1, keepdim=True)[1].view(-1).cpu().numpy()
-                # pred_score = [x[tmp_y.cpu().detach().numpy()[i]] for i, x in enumerate(out_label.cpu().detach().numpy())]
-                # y_pred.extend(pred)
-                # y_pred_score.extend(pred_score)
-
-                if att_flag:
-                    att = alpha_n.cpu().detach().numpy()
-                    for att_i in range(alpha_n.shape[0]):
-                        smi_len = get_len(tmp_smi[att_i])
-                        if smi_len > 40:
-                            continue
-                        att_tmp = att[att_i,:smi_len*2,:smi_len*2]
-                        att_heatmap = att_tmp[1::2, 1::2]
-                        att_heatmap = (att_heatmap - att_heatmap.min()) / (att_heatmap.max() - att_heatmap.min())
-                        # f, (ax1, ax2) = plt.subplots(figsize=(6, 6), nrows=1)
-                        # if "O=C1NC(=O)C(N1)(c2ccccc2)c3ccccc3".__eq__(tmp_smi[att_i]):
-                        #     joblib.dump(att_heatmap, 'esol/att'+str(epoch)+'.pkl')
-                        fig = sns.heatmap(att_heatmap, cmap='OrRd')
-                        # plt.show()
-                        scatter_fig = fig.get_figure()
-                        try:
-                            scatter_fig.savefig("esol/att_img/"+str(tmp_smi[att_i])+".png", dpi=400)
-                        except:
-                            continue
-                        finally:
-                            plt.close()
-
-
-                        att_word_tmp = att_n[att_i,:smi_len*2].cpu().detach().numpy()
-                        att_word = att_word_tmp[1::2]
-                        # if max(att_word) > 0.1:
-                        a = []
-                        for a_index,i in enumerate(att_word):
-                            a.append(str(a_index)+",1,"+str(1-i)+","+str(1-i))
-                        main(tmp_smi[att_i], a, [], "esol/att_word/"+str(tmp_smi[att_i])+".png")
-
 
 
                 y_pred = outputs.to(device).view(-1)
