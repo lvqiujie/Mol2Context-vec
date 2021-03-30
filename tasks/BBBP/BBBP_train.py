@@ -14,8 +14,8 @@ from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-from utils.util import *
-from utils.model import *
+from tasks.utils.util import *
+from tasks.utils.model import *
 
 
 if __name__ == '__main__':

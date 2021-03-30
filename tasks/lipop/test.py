@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-from esol.esol_train import LSTM, MyDataset
+from tasks.lipop.train import LSTM, MyDataset
 import torch.nn.functional as F
 import torch.utils.data as data
 import pandas as pd

@@ -11,8 +11,8 @@ import random
 from sklearn import metrics
 from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
-from utils.util import *
-from utils.model import *
+from tasks.utils.util import *
+from tasks.utils.model import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == '__main__':
