@@ -96,8 +96,8 @@ import os
 import keras.backend as K
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from data import DATA_SET_DIR
-from elmo.smi_generator import SMIDataGenerator
-from elmo.smi_model import ELMo
+from context_vec.smi_generator import SMIDataGenerator
+from context_vec.smi_model import context_vec
 import tensorflow as tf
 from tensorflow import keras
 from sklearn.externals import joblib
@@ -113,7 +113,7 @@ parameters = {
     'cuDNN': True if len(K.tensorflow_backend._get_available_gpus()) else False,
     'test_dataset': 'lipop/lipop_tran.cp_UNK',
     'vocab': 'my_smi/smi_tran.vocab',
-    'model_dir': "smi_elmo_512",
+    'model_dir': "smi_context_vec_512",
     'vocab_flag': False,
     'uncommon_threshold': 3,
     # 'vocab_size': 28914,
@@ -159,25 +159,25 @@ test_generator = SMIDataGenerator(parameters['test_dataset'],
                                 shuffle=parameters['shuffle'],
                                 token_encoding=parameters['token_encoding'])
 
-# Compile ELMo
-elmo_model = ELMo(parameters)
-elmo_model.compile_context_vec()
+# Compile context_vec
+context_vec_model = context_vec(parameters)
+context_vec_model.compile_context_vec()
 
-# elmo_model.load(sampled_softmax=False)
+# context_vec_model.load(sampled_softmax=False)
 #
 # # Evaluate Bidirectional Language Model
-# elmo_model.evaluate(test_generator, parameters['test_batch_size'])
+# context_vec_model.evaluate(test_generator, parameters['test_batch_size'])
 #
-# # Build ELMo meta-model to deploy for production and persist in disk
-# elmo_model.wrap_multi_elmo_encoder(print_summary=True)
+# # Build context_vec meta-model to deploy for production and persist in disk
+# context_vec_model.wrap_multi_context_vec_encoder(print_summary=True)
 
-# Load ELMo encoder
-elmo_model.load_elmo_encoder()
+# Load context_vec encoder
+context_vec_model.load_context_vec_encoder()
 
-# Get ELMo embeddings to feed as inputs for downstream tasks
-elmo_embeddings = elmo_model.get_outputs(test_generator, output_type='word', state='all')
-print(elmo_embeddings.shape)
+# Get context_vec embeddings to feed as inputs for downstream tasks
+context_vec_embeddings = context_vec_model.get_outputs(test_generator, output_type='word', state='all')
+print(context_vec_embeddings.shape)
 
 # 保存x
-joblib.dump(elmo_embeddings, 'lipop/lipop_embed.pkl')
+joblib.dump(context_vec_embeddings, 'lipop/lipop_embed.pkl')
 

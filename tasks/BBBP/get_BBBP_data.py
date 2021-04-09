@@ -141,21 +141,21 @@ test_generator = SMIDataGenerator(parameters['test_dataset'],
 context_vec_model = Context_vec(parameters)
 context_vec_model.compile_context_vec()
 
-# elmo_model.load(sampled_softmax=False)
+# context_vec_model.load(sampled_softmax=False)
 #
 # # Evaluate Bidirectional Language Model
-# elmo_model.evaluate(test_generator, parameters['test_batch_size'])
+# context_vec_model.evaluate(test_generator, parameters['test_batch_size'])
 #
 # # Build  meta-model to deploy for production and persist in disk
-# elmo_model.wrap_multi_elmo_encoder(print_summary=True)
+# context_vec_model.wrap_multi_context_vec_encoder(print_summary=True)
 
 # Load  encoder
-elmo_model.load_elmo_encoder()
+context_vec_model.load_context_vec_encoder()
 
 # Get  embeddings to feed as inputs for downstream tasks
-elmo_embeddings = elmo_model.get_outputs(test_generator, output_type='word', state='all')
-print(elmo_embeddings.shape)
+context_vec_embeddings = context_vec_model.get_outputs(test_generator, output_type='word', state='all')
+print(context_vec_embeddings.shape)
 
 # 保存x
-joblib.dump(elmo_embeddings, 'BBBP/BBBP_embed.pkl')
+joblib.dump(context_vec_embeddings, 'BBBP/BBBP_embed.pkl')
 

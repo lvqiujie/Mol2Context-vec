@@ -26,7 +26,7 @@ from context_vec.custom_layers import TimestepDropout, Camouflage, Highway, Samp
 class Context_vec(object):
     def __init__(self, parameters):
         self._model = None
-        self._elmo_model = None
+        self._context_vec_model = None
         self.parameters = parameters
         self.model_dir = parameters['model_dir']
         if not os.path.exists(os.path.join(MODELS_DIR, self.model_dir)):
@@ -166,7 +166,7 @@ class Context_vec(object):
     def train(self, train_data, valid_data):
 
         # Add callbacks (early stopping, model checkpoint)
-        weights_file = os.path.join(MODELS_DIR, self.model_dir, "elmo_best_weights_{epoch:03d}_{val_loss:.2f}.hdf5")
+        weights_file = os.path.join(MODELS_DIR, self.model_dir, "context_vec_best_weights_{epoch:03d}_{val_loss:.2f}.hdf5")
         save_best_model = ModelCheckpoint(filepath=weights_file, monitor='val_loss', verbose=1,
                                           save_best_only=False, mode='auto')
         # early_stopping = EarlyStopping(patience=self.parameters['patience'], restore_best_weights=True)
@@ -224,8 +224,8 @@ class Context_vec(object):
             y_true_backward, y_pred_backward = unpad(test_batch[0], test_batch[2], y_pred_backward_tmp)
 
             # Compute and print perplexity
-            # print('{}， Forward Langauge Model Perplexity: {}'.format(i, ELMo.perplexity(y_pred_forward, y_true_forward)))
-            # print('{}， Backward Langauge Model Perplexity: {}'.format(i, ELMo.perplexity(y_pred_backward, y_true_backward)))
+            # print('{}， Forward Langauge Model Perplexity: {}'.format(i, context_vec.perplexity(y_pred_forward, y_true_forward)))
+            # print('{}， Backward Langauge Model Perplexity: {}'.format(i, context_vec.perplexity(y_pred_backward, y_true_backward)))
             print('{}， avg {}'.format(i,
                                       (Context_vec.perplexity(y_pred_backward, y_true_backward) + Context_vec.perplexity(y_pred_forward, y_true_forward)) / 2
                                       ))
@@ -252,37 +252,37 @@ class Context_vec(object):
 
 
 
-    def wrap_multi_elmo_encoder(self, print_summary=False, save=False):
+    def wrap_multi_context_vec_encoder(self, print_summary=False, save=False):
         """
-        Wrap ELMo meta-model encoder, which returns an array of the 3 intermediate ELMo outputs
+        Wrap context_vec meta-model encoder, which returns an array of the 3 intermediate context_vec outputs
         :param print_summary: print a summary of the new architecture
         :param save: persist model
         :return: None
         """
 
-        elmo_embeddings = list()
-        elmo_embeddings.append(concatenate([self._model.get_layer('token_encoding').output, self._model.get_layer('token_encoding').output],
-                                           name='elmo_embeddings_level_0'))
+        context_vec_embeddings = list()
+        context_vec_embeddings.append(concatenate([self._model.get_layer('token_encoding').output, self._model.get_layer('token_encoding').output],
+                                           name='context_vec_embeddings_level_0'))
         for i in range(self.parameters['n_lstm_layers']):
-            elmo_embeddings.append(concatenate([self._model.get_layer('f_block_{}'.format(i + 1)).output,
+            context_vec_embeddings.append(concatenate([self._model.get_layer('f_block_{}'.format(i + 1)).output,
                                                 Lambda(function=Context_vec.reverse)
                                                 (self._model.get_layer('b_block_{}'.format(i + 1)).output)],
-                                               name='elmo_embeddings_level_{}'.format(i + 1)))
+                                               name='context_vec_embeddings_level_{}'.format(i + 1)))
 
         camos = list()
-        for i, elmo_embedding in enumerate(elmo_embeddings):
-            camos.append(Camouflage(mask_value=0.0, name='camo_elmo_embeddings_level_{}'.format(i + 1))([elmo_embedding,
+        for i, context_vec_embedding in enumerate(context_vec_embeddings):
+            camos.append(Camouflage(mask_value=0.0, name='camo_context_vec_embeddings_level_{}'.format(i + 1))([context_vec_embedding,
                                                                                                          self._model.get_layer(
                                                                                                              'token_encoding').output]))
 
-        self._elmo_model = Model(inputs=[self._model.get_layer('word_indices').input], outputs=camos)
+        self._context_vec_model = Model(inputs=[self._model.get_layer('word_indices').input], outputs=camos)
 
         if print_summary:
-            self._elmo_model.summary()
+            self._context_vec_model.summary()
 
         if save:
-            self._elmo_model.save(os.path.join(MODELS_DIR, self.model_dir, 'ELMo_Encoder.hd5'))
-            print('ELMo Encoder saved successfully')
+            self._context_vec_model.save(os.path.join(MODELS_DIR, self.model_dir, 'context_vec_Encoder.hd5'))
+            print('context_vec Encoder saved successfully')
 
     def save(self, sampled_softmax=True, model_dir="model"):
         """
@@ -302,29 +302,29 @@ class Context_vec(object):
                     min_loss = tmp_loss
                     best_name = file_name
         shutil.copyfile(os.path.join(MODELS_DIR, self.model_dir, best_name),
-                        os.path.join(MODELS_DIR, self.model_dir, 'elmo_best_weights.hdf5'))
+                        os.path.join(MODELS_DIR, self.model_dir, 'context_vec_best_weights.hdf5'))
         print(" best model name is :" + best_name)
-        self._model.load_weights(os.path.join(MODELS_DIR, self.model_dir, 'elmo_best_weights.hdf5'))
-        self._model.save(os.path.join(MODELS_DIR, model_dir, 'ELMo_LM_EVAL.hd5'))
-        print('ELMo Language Model saved successfully')
+        self._model.load_weights(os.path.join(MODELS_DIR, self.model_dir, 'context_vec_best_weights.hdf5'))
+        self._model.save(os.path.join(MODELS_DIR, model_dir, 'context_vec_LM_EVAL.hd5'))
+        print('context_vec Language Model saved successfully')
 
     def load(self, sampled_softmax=False):
         if not sampled_softmax:
             self.parameters['num_sampled'] = self.parameters['vocab_size']
         self.compile_context_vec()
-        self._model.load_weights(os.path.join(MODELS_DIR, self.model_dir, 'elmo_best_weights.hdf5'))
-        # self._model = load_model(os.path.join(MODELS_DIR, self.model_dir, 'ELMo_Encoder.hd5'),
+        self._model.load_weights(os.path.join(MODELS_DIR, self.model_dir, 'context_vec_best_weights.hdf5'))
+        # self._model = load_model(os.path.join(MODELS_DIR, self.model_dir, 'context_vec_Encoder.hd5'),
         #                          custom_objects={'TimestepDropout': TimestepDropout,
         #                                          'Camouflage': Camouflage})
 
-    def load_elmo_encoder(self):
-        self._elmo_model = load_model(os.path.join(MODELS_DIR, self.model_dir, 'ELMo_Encoder.hd5'),
+    def load_context_vec_encoder(self):
+        self._context_vec_model = load_model(os.path.join(MODELS_DIR, self.model_dir, 'context_vec_Encoder.hd5'),
                                       custom_objects={'TimestepDropout': TimestepDropout,
                                                       'Camouflage': Camouflage})
 
     def get_outputs(self, test_data, output_type='word', state='last'):
         """
-       Wrap ELMo meta-model encoder, which returns an array of the 3 intermediate ELMo outputs
+       Wrap context_vec meta-model encoder, which returns an array of the 3 intermediate context_vec outputs
        :param test_data: data generator
        :param output_type: "word" for word vectors or "sentence" for sentence vectors
        :param state: 'last' for 2nd LSTMs outputs or 'mean' for mean-pooling over inputs, 1st LSTMs and 2nd LSTMs
@@ -336,27 +336,27 @@ class Context_vec(object):
         for i in range(10):
             x = test_data[i][0]
             # print(x[0])
-            tmp = np.asarray(self._elmo_model.predict(np.asarray(x[0]))).swapaxes(0,1)
+            tmp = np.asarray(self._context_vec_model.predict(np.asarray(x[0]))).swapaxes(0,1)
             preds1.extend(tmp)
             del tmp
 
         preds = np.array(preds1)
         del preds1
         if state == 'last':
-            elmo_vectors = preds[:,-1,:,:]
+            context_vec_vectors = preds[:,-1,:,:]
         elif state == 'all':
-            elmo_vectors = preds
+            context_vec_vectors = preds
         else:
-            elmo_vectors = np.mean(preds, axis=1)
+            context_vec_vectors = np.mean(preds, axis=1)
 
         if output_type == 'word':
-            return elmo_vectors
+            return context_vec_vectors
         else:
-            return np.mean(elmo_vectors, axis=2)
+            return np.mean(context_vec_vectors, axis=2)
 
     def get_outputs_Bylist(self, test_data, output_typeBy='word', state='last'):
         """
-       Wrap ELMo meta-model encoder, which returns an array of the 3 intermediate ELMo outputs
+       Wrap context_vec meta-model encoder, which returns an array of the 3 intermediate context_vec outputs
        :param test_data: data generator
        :param output_type: "word" for word vectors or "sentence" for sentence vectors
        :param state: 'last' for 2nd LSTMs outputs or 'mean' for mean-pooling over inputs, 1st LSTMs and 2nd LSTMs
@@ -367,7 +367,7 @@ class Context_vec(object):
         for i in range(len(test_data)):
             x = test_data[i][0]
             # print(x[0])
-            tmp = np.asarray(self._elmo_model.predict(np.asarray(x[0]))).swapaxes(0,1)
+            tmp = np.asarray(self._context_vec_model.predict(np.asarray(x[0]))).swapaxes(0,1)
             preds.extend(tmp)
 
         return preds
@@ -379,16 +379,16 @@ class Context_vec(object):
         #     test_batch = test_data[0]
         #     x.extend(test_batch[0])
 
-        preds = np.asarray(self._elmo_model.predict(np.asarray(test_data)))
+        preds = np.asarray(self._context_vec_model.predict(np.asarray(test_data)))
         if state == 'last':
-            elmo_vectors = preds[-1]
+            context_vec_vectors = preds[-1]
         else:
-            elmo_vectors = np.mean(preds, axis=0)
+            context_vec_vectors = np.mean(preds, axis=0)
 
         if output_type == 'words':
-            return elmo_vectors
+            return context_vec_vectors
         else:
-            return np.mean(elmo_vectors, axis=1)
+            return np.mean(context_vec_vectors, axis=1)
 
     @staticmethod
     def reverse(inputs, axes=1):

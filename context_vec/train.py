@@ -20,7 +20,7 @@ parameters = {
     'test_dataset': my_smi+'/mols_test.cp_UNK',
     'vocab': my_smi+'/smi_tran.vocab',
     'vocab_flag': False,
-    'model_dir': "smi_elmo_0_300",
+    'model_dir': "smi_context_vec_0_300",
     'uncommon_threshold': 3,
     # 'vocab_size': 28914,
     # 'vocab_size': 748,
@@ -117,27 +117,27 @@ test_generator = SMIDataGenerator(os.path.join(DATA_SET_DIR, parameters['test_da
                                 shuffle=parameters['shuffle'],
                                 token_encoding=parameters['token_encoding'])
 
-# Compile ELMo
-elmo_model = Context_vec(parameters)
-elmo_model.compile_context_vec(print_summary=True)
+# Compile context_vec
+context_vec_model = Context_vec(parameters)
+context_vec_model.compile_context_vec(print_summary=True)
 
-# Train ELMo
-# elmo_model.train(train_data=train_generator, valid_data=val_generator)
+# Train context_vec
+# context_vec_model.train(train_data=train_generator, valid_data=val_generator)
 
-# Persist ELMo Bidirectional Language Model in disk
-elmo_model.save(sampled_softmax=False, model_dir=parameters['model_dir'])
+# Persist context_vec Bidirectional Language Model in disk
+context_vec_model.save(sampled_softmax=False, model_dir=parameters['model_dir'])
 
 # Evaluate Bidirectional Language Model
-elmo_model.evaluate(test_generator, parameters['test_batch_size'])
+context_vec_model.evaluate(test_generator, parameters['test_batch_size'])
 
-# Build ELMo meta-model to deploy for production and persist in disk
-elmo_model.wrap_multi_elmo_encoder(print_summary=True, save=True)
+# Build context_vec meta-model to deploy for production and persist in disk
+context_vec_model.wrap_multi_context_vec_encoder(print_summary=True, save=True)
 
-# Load ELMo encoder
-elmo_model.load_elmo_encoder()
+# Load context_vec encoder
+context_vec_model.load_context_vec_encoder()
 
-# Get ELMo embeddings to feed as inputs for downstream tasks
-# elmo_embeddings = elmo_model.get_outputs(test_generator, output_type='word', state='mean')
+# Get context_vec embeddings to feed as inputs for downstream tasks
+# context_vec_embeddings = context_vec_model.get_outputs(test_generator, output_type='word', state='mean')
 
 # BUILD & TRAIN NEW KERAS MODEL FOR DOWNSTREAM TASK (E.G., TEXT CLASSIFICATION)
 a = 1
