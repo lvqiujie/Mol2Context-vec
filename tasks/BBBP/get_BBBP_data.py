@@ -1,7 +1,7 @@
 import sys
 sys.path.append('./')
 import pandas as pd
-from sklearn.externals import joblib
+import joblib
 import numpy as np
 import os
 
@@ -74,12 +74,11 @@ joblib.dump(smi, 'BBBP/smi.pkl')
 # step 4
 import keras.backend as K
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-from data import DATA_SET_DIR
-from elmo.smi_generator import SMIDataGenerator
-from elmo.smi_model import ELMo
+from context_vec.smi_generator import SMIDataGenerator
+from context_vec.smi_model import Context_vec
 import tensorflow as tf
 from tensorflow import keras
-from sklearn.externals import joblib
+import joblib
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -92,7 +91,7 @@ parameters = {
     'cuDNN': True if len(K.tensorflow_backend._get_available_gpus()) else False,
     'test_dataset': 'BBBP/BBBP_tran.cp_UNK',
     'vocab': 'my_smi/smi_tran.vocab',
-    'model_dir': "smi_elmo_300_0",
+    'model_dir': "smi_context_vec_300_0",
     'vocab_flag': False,
     'uncommon_threshold': 3,
     # 'vocab_size': 28914,
@@ -138,22 +137,22 @@ test_generator = SMIDataGenerator(parameters['test_dataset'],
                                 shuffle=parameters['shuffle'],
                                 token_encoding=parameters['token_encoding'])
 
-# Compile ELMo
-elmo_model = ELMo(parameters)
-elmo_model.compile_elmo()
+# Compile 
+context_vec_model = Context_vec(parameters)
+context_vec_model.compile_context_vec()
 
 # elmo_model.load(sampled_softmax=False)
 #
 # # Evaluate Bidirectional Language Model
 # elmo_model.evaluate(test_generator, parameters['test_batch_size'])
 #
-# # Build ELMo meta-model to deploy for production and persist in disk
+# # Build  meta-model to deploy for production and persist in disk
 # elmo_model.wrap_multi_elmo_encoder(print_summary=True)
 
-# Load ELMo encoder
+# Load  encoder
 elmo_model.load_elmo_encoder()
 
-# Get ELMo embeddings to feed as inputs for downstream tasks
+# Get  embeddings to feed as inputs for downstream tasks
 elmo_embeddings = elmo_model.get_outputs(test_generator, output_type='word', state='all')
 print(elmo_embeddings.shape)
 

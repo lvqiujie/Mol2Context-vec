@@ -23,7 +23,7 @@ MODELS_DIR = 'context_vec/models'
 from context_vec.custom_layers import TimestepDropout, Camouflage, Highway, SampledSoftmax
 
 
-class ELMo(object):
+class Context_vec(object):
     def __init__(self, parameters):
         self._model = None
         self._elmo_model = None
@@ -31,7 +31,7 @@ class ELMo(object):
         self.model_dir = parameters['model_dir']
         if not os.path.exists(os.path.join(MODELS_DIR, self.model_dir)):
             os.mkdir(os.path.join(MODELS_DIR, self.model_dir))
-        self.compile_elmo()
+        self.compile_context_vec()
 
     def __del__(self):
         K.clear_session()
@@ -70,7 +70,7 @@ class ELMo(object):
         token_encoder = Model(inputs=inputs, outputs=token_embeds, name='token_encoding')
         return token_encoder
 
-    def compile_elmo(self, print_summary=False):
+    def compile_context_vec(self, print_summary=False):
         """
         Compiles a Language Model RNN based on the given parameters
         """
@@ -102,8 +102,8 @@ class ELMo(object):
             previous_ids = Input(shape=(None, 1), name='previous_ids', dtype='float32')
 
         # Reversed input for backward LSTMs
-        re_lstm_inputs = Lambda(function=ELMo.reverse)(lstm_inputs)
-        mask = Lambda(function=ELMo.reverse)(drop_inputs)
+        re_lstm_inputs = Lambda(function=Context_vec.reverse)(lstm_inputs)
+        mask = Lambda(function=Context_vec.reverse)(drop_inputs)
 
         # Forward LSTMs
         for i in range(self.parameters['n_lstm_layers']):
@@ -146,7 +146,7 @@ class ELMo(object):
             re_lstm_inputs = SpatialDropout1D(self.parameters['dropout_rate'])(re_lstm_inputs)
 
         # Reverse backward LSTMs' outputs = Make it forward again
-        re_lstm_inputs = Lambda(function=ELMo.reverse, name="reverse")(re_lstm_inputs)
+        re_lstm_inputs = Lambda(function=Context_vec.reverse, name="reverse")(re_lstm_inputs)
 
         # Project to Vocabulary with Sampled Softmax
         sampled_softmax = SampledSoftmax(num_classes=self.parameters['vocab_size'],
@@ -227,7 +227,7 @@ class ELMo(object):
             # print('{}， Forward Langauge Model Perplexity: {}'.format(i, ELMo.perplexity(y_pred_forward, y_true_forward)))
             # print('{}， Backward Langauge Model Perplexity: {}'.format(i, ELMo.perplexity(y_pred_backward, y_true_backward)))
             print('{}， avg {}'.format(i,
-                                      (ELMo.perplexity(y_pred_backward, y_true_backward)+ELMo.perplexity(y_pred_forward, y_true_forward))/2
+                                      (Context_vec.perplexity(y_pred_backward, y_true_backward) + Context_vec.perplexity(y_pred_forward, y_true_forward)) / 2
                                       ))
             del test_batch, y_true_backward, y_pred_backward, \
                 y_pred_forward_tmp, y_pred_backward_tmp, y_true_forward, y_pred_forward
@@ -265,7 +265,7 @@ class ELMo(object):
                                            name='elmo_embeddings_level_0'))
         for i in range(self.parameters['n_lstm_layers']):
             elmo_embeddings.append(concatenate([self._model.get_layer('f_block_{}'.format(i + 1)).output,
-                                                Lambda(function=ELMo.reverse)
+                                                Lambda(function=Context_vec.reverse)
                                                 (self._model.get_layer('b_block_{}'.format(i + 1)).output)],
                                                name='elmo_embeddings_level_{}'.format(i + 1)))
 
@@ -292,7 +292,7 @@ class ELMo(object):
         """
         if not sampled_softmax:
             self.parameters['num_sampled'] = self.parameters['vocab_size']
-        self.compile_elmo()
+        self.compile_context_vec()
         best_name = ""
         min_loss = 100000
         for file_name in os.listdir(os.path.join(MODELS_DIR, self.model_dir)):
@@ -311,7 +311,7 @@ class ELMo(object):
     def load(self, sampled_softmax=False):
         if not sampled_softmax:
             self.parameters['num_sampled'] = self.parameters['vocab_size']
-        self.compile_elmo()
+        self.compile_context_vec()
         self._model.load_weights(os.path.join(MODELS_DIR, self.model_dir, 'elmo_best_weights.hdf5'))
         # self._model = load_model(os.path.join(MODELS_DIR, self.model_dir, 'ELMo_Encoder.hd5'),
         #                          custom_objects={'TimestepDropout': TimestepDropout,
