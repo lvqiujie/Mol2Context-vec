@@ -2,7 +2,7 @@ import os
 import keras.backend as K
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from context_vec.smi_generator import SMIDataGenerator
-from context_vec.smi_model import ELMo
+from context_vec.smi_model import Context_vec
 import tensorflow as tf
 from tensorflow import keras
 config = tf.ConfigProto()
@@ -118,8 +118,8 @@ test_generator = SMIDataGenerator(os.path.join(DATA_SET_DIR, parameters['test_da
                                 token_encoding=parameters['token_encoding'])
 
 # Compile ELMo
-elmo_model = ELMo(parameters)
-elmo_model.compile_elmo(print_summary=True)
+elmo_model = Context_vec(parameters)
+elmo_model.compile_context_vec(print_summary=True)
 
 # Train ELMo
 # elmo_model.train(train_data=train_generator, valid_data=val_generator)

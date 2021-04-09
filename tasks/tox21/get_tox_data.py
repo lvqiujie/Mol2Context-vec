@@ -156,7 +156,7 @@ test_generator = SMIDataGenerator(parameters['test_dataset'],
 
 # Compile ELMo
 elmo_model = ELMo(parameters)
-elmo_model.compile_elmo()
+elmo_model.compile_context_vec()
 
 # elmo_model.load(sampled_softmax=False)
 #

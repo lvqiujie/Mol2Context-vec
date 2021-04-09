@@ -16,7 +16,7 @@ import math
 import pickle
 import random
 from rdkit.Chem import MolFromSmiles
-from AttentiveFP.Featurizer import *
+# from AttentiveFP.Featurizer import *
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import torch.optim as optim
@@ -24,7 +24,7 @@ from scipy.stats import pearsonr
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
-from AttentiveFP import Fingerprint, Fingerprint_viz, save_smiles_dicts, get_smiles_dicts, get_smiles_array, moltosvg_highlight
+# from AttentiveFP import Fingerprint, Fingerprint_viz, save_smiles_dicts, get_smiles_dicts, get_smiles_array, moltosvg_highlight
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 p_dropout = 0.2

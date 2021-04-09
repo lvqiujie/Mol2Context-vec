@@ -99,10 +99,10 @@ if __name__ == '__main__':
             # y_pred.extend(pred)
             # y_pred_score.extend(pred_score)
 
-            outputs = torch.sigmoid(outputs).view(-1)
             # tmp_y = F.one_hot(tmp_y, 2).float().to(device)
             loss = loss_function(outputs.to(device), tmp_y.float().to(device))
 
+            outputs = torch.sigmoid(outputs).view(-1)
             pred = np.zeros_like(outputs.cpu().detach().numpy(), dtype=int)
             pred[np.where(np.asarray(outputs.cpu().detach().numpy()) > 0.5)] = 1
             y_pred.extend(pred)
